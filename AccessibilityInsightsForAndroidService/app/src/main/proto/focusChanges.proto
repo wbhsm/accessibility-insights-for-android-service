@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package focusChanges;
+
+option java_package = "com.microsoft.accessibilityinsightsforandroidservice";
+option java_outer_classname = "FocusedViewProto";
+
+message FocusedView {
+    string viewType = 1;
+}
+
+message GetFocusedViewRequest {
+    int32 dummy = 1;
+}
+
+service FocusedViewService {
+    rpc GetFocusedView (GetFocusedViewRequest) returns (FocusedView);
+}
