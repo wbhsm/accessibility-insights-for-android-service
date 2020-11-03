@@ -25,6 +25,8 @@ import android.os.HandlerThread;
 import android.util.DisplayMetrics;
 import android.view.accessibility.AccessibilityEvent;
 
+import java.io.IOException;
+
 public class AccessibilityInsightsForAndroidService extends AccessibilityService {
   private static final String TAG = "AccessibilityInsightsForAndroidService";
   private static ServerThread ServerThread = null;
@@ -33,6 +35,7 @@ public class AccessibilityInsightsForAndroidService extends AccessibilityService
   private final DeviceConfigFactory deviceConfigFactory;
   private final OnScreenshotAvailableProvider onScreenshotAvailableProvider =
       new OnScreenshotAvailableProvider();
+  private final FocusedViewServer focusedViewServer;
   private final BitmapProvider bitmapProvider = new BitmapProvider();
   private HandlerThread screenshotHandlerThread = null;
   private ScreenshotController screenshotController = null;
@@ -43,6 +46,7 @@ public class AccessibilityInsightsForAndroidService extends AccessibilityService
     axeScanner =
         AxeScannerFactory.createAxeScanner(deviceConfigFactory, this::getRealDisplayMetrics);
     eventHelper = new EventHelper(new ThreadSafeSwapper<>());
+    focusedViewServer = new FocusedViewServer(9955);
   }
 
   private DisplayMetrics getRealDisplayMetrics() {
@@ -70,6 +74,22 @@ public class AccessibilityInsightsForAndroidService extends AccessibilityService
     }
 
     screenshotController = null;
+  }
+
+  private void startFocusedViewServer() {
+    try {
+      focusedViewServer.start();
+    } catch (IOException e) {
+      Logger.logError(TAG, StackTrace.getStackTrace(e));
+    }
+  }
+
+  private void stopFocusedViewServer() {
+    try {
+      focusedViewServer.stop();
+    } catch (InterruptedException e) {
+      Logger.logError(TAG, StackTrace.getStackTrace(e));
+    }
   }
 
   @Override
@@ -108,10 +128,12 @@ public class AccessibilityInsightsForAndroidService extends AccessibilityService
             screenshotController, eventHelper, axeScanner, deviceConfigFactory);
     ServerThread = new ServerThread(new ServerSocketFactory(), responseThreadFactory);
     ServerThread.start();
+    startFocusedViewServer();
   }
 
   @Override
   public boolean onUnbind(Intent intent) {
+    stopFocusedViewServer();
     Logger.logVerbose(TAG, "*** onUnbind");
     StopServerThread();
     stopScreenshotHandlerThread();
