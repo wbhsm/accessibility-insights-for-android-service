@@ -9,12 +9,18 @@ class FocusedViewService extends FocusedViewServiceGrpc.FocusedViewServiceImplBa
     FocusedViewService(){}
 
     @Override
-    public void getFocusedView(FocusedViewProto.GetFocusedViewRequest request, StreamObserver<FocusedViewProto.FocusedView> responseObserver) {
-        responseObserver.onNext(GetFocusedView((request)));
-        responseObserver.onCompleted();
+    public void getFocusedView(FocusedViewProto.Empty request, StreamObserver<FocusedViewProto.FocusedView> responseObserver) {
+        while(true) {
+            responseObserver.onNext(GetFocusedView(request));
+        }
     }
 
-    private FocusedViewProto.FocusedView GetFocusedView(FocusedViewProto.GetFocusedViewRequest request) {
+    private FocusedViewProto.FocusedView GetFocusedView(FocusedViewProto.Empty request) {
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         String timePosingAsType = Calendar.getInstance().getTime().toString();
         return FocusedViewProto.FocusedView.newBuilder().setViewType(timePosingAsType).build();
     }
